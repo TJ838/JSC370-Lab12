@@ -86,7 +86,6 @@ sb_nutr_long <- sb_nutr |> unnest_tokens(word, Item, token="words") |>
 fig2 <- plot_ly(data = sb_nutr_long, x = ~word, y = ~value, color = ~Nutrient, type = "box") |>
   layout(title = "Nutrition values for the top 10 word items", xaxis = list(title = "Item word"), yaxis = list(title = "Nutrition value"), boxmode = "group")
 
-
-frameWidget(fig2)
+fig2
 ```
 
