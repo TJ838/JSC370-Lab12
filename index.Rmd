@@ -1,0 +1,87 @@
+---
+title: "JSC370 Final Project"
+author: "Taiyi Jin"
+output: 
+    html_document:
+        toc: TRUE
+        toc_float: TRUE
+        lib_dir: "libs"
+        self_contained: FALSE
+---
+
+This is my JSC370 final project website!
+
+```{r, echo = FALSE, message = FALSE, warning= FALSE}
+# code from week 11 lab
+
+library(tidyverse)
+library(plotly)
+library(widgetframe)
+library(tidytext)
+
+### load Starbucks and state-level data ###
+sb_locs <- read_csv("https://raw.githubusercontent.com/JSC370/JSC370-2025/refs/heads/main/data/starbucks/starbucks-locations.csv")
+
+sb_nutr <- read_csv("https://raw.githubusercontent.com/JSC370/JSC370-2025/refs/heads/main/data/starbucks/starbucks-menu-nutrition.csv")
+
+usa_pop <- read_csv("https://raw.githubusercontent.com/JSC370/JSC370-2025/refs/heads/main/data/starbucks/us_state_pop.csv")
+
+usa_states<-read_csv("https://raw.githubusercontent.com/JSC370/JSC370-2025/refs/heads/main/data/starbucks/states.csv")
+
+
+### Merge data ###
+sb_usa <- sb_locs |> filter(Country=="US")
+
+sb_locs_state <- sb_usa |>
+  group_by(`State/Province`) |>
+  rename(state=`State/Province`) |>
+  summarize(n_stores=n())
+
+# need state abbreviations
+usa_pop_abbr <- 
+  full_join(usa_pop, usa_states, 
+            by = join_by(state == State)
+  ) 
+
+sb_locs_state <- full_join(sb_locs_state, usa_pop_abbr,
+                           by = join_by (state == Abbreviation))
+```
+
+
+```{r, echo = FALSE, message = FALSE, warning= FALSE}
+### Get topwords from menu items ###
+
+topwords <- sb_nutr |>
+  unnest_tokens(word, Item, token="words") |>
+  group_by(word) |>
+  summarise(word_frequency = n()) |>
+  arrange(across(word_frequency, desc)) |>
+  head(10)
+
+```
+
+## Showcasing plots {.tabset}
+
+### Figure 1
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+sb_nutr |>  
+  unnest_tokens(word, Item, token="words") |>
+  filter(word %in% topwords$word) |>
+  plot_ly(x = ~Calories, y = ~`Carb. (g)`, type = 'scatter', mode = 'markers', color = ~Category, hoverinfo = "text", text = ~paste0("Item: ", word))|>
+  layout(title = "cal vs carbs", xaxis = list(title = "Calories"), yaxis = list(title = "Carbs"), hovermode = "compare")
+
+```
+
+### Figure 2
+
+```{r echo=FALSE, warning=FALSE, message = FALSE}
+sb_nutr_long <- sb_nutr |> unnest_tokens(word, Item, token="words") |>
+  filter(word %in% topwords$word) |>
+  pivot_longer(cols = c(Calories, `Fat (g)`, `Carb. (g)`, `Fiber (g)`, `Protein (g)`), names_to = "Nutrient", values_to = "value")
+
+plot_ly(data = sb_nutr_long, x = ~word, y = ~value, color = ~Nutrient, type = "box") |>
+  layout(title = "Nutrition values for the top 10 word items", xaxis = list(title = "Item word"), yaxis = list(title = "Nutrition value"), boxmode = "group")
+```
+
