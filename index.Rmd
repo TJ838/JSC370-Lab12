@@ -65,7 +65,6 @@ topwords <- sb_nutr |>
 ### Figure 1
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
-library(widgetframe)
 
 fig1 <- sb_nutr |>  
   unnest_tokens(word, Item, token="words") |>
@@ -73,7 +72,7 @@ fig1 <- sb_nutr |>
   plot_ly(x = ~Calories, y = ~`Carb. (g)`, type = 'scatter', mode = 'markers', color = ~Category, hoverinfo = "text", text = ~paste0("Item: ", word))|>
   layout(title = "cal vs carbs", xaxis = list(title = "Calories"), yaxis = list(title = "Carbs"), hovermode = "compare")
 
-frameWidget(fig1)
+fig1
 ```
 
 ### Figure 2
